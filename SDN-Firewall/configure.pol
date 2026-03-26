@@ -1,0 +1,55 @@
+# SDN Firewall Configuration
+#
+# Rule Format:
+# RuleNumber,Action,Source MAC,Dest MAC,Source IP,Dest IP,Protocol,Source Port,Dest Port,Comment
+#
+# Protocol numbers: 1=ICMP, 6=TCP, 17=UDP
+# Use '-' for any field not being matched
+# IP addresses use CIDR notation (10.0.1.1/32 for single host, 10.0.1.0/24 for subnet)
+#
+# Example rules:
+1,Block,-,-,10.0.0.1/32,10.0.1.0/24,6,-,80,Block 10.0.0.1 from accessing a web server on the 10.0.1.0/24 network
+2,Allow,-,-,10.0.0.1/32,10.0.1.125/32,6,-,80,Allow 10.0.0.1 to access a web server on 10.0.1.125 overriding previous rule
+#
+# Task 1: cn4 has a TCP worm - block all outbound TCP
+3,Block,-,-,10.0.30.4/32,-,6,-,-,Block cn4 TCP outbound (worm)
+#
+# Task 2: completely isolate cn5 - block both directions
+4,Block,-,-,10.0.30.5/32,-,-,-,-,Block all traffic FROM cn5
+5,Block,-,-,-,10.0.30.5/32,-,-,-,Block all traffic TO cn5
+#
+# Task 3: ICMP ping access control
+# block pings to US/UK/India from anyone
+6,Block,-,-,-,10.0.1.0/24,1,-,-,Block ICMP to US subnet
+7,Block,-,-,-,10.0.40.0/24,1,-,-,Block ICMP to UK subnet
+8,Block,-,-,-,10.0.20.0/24,1,-,-,Block ICMP to India subnet
+# but let HQ ping those subnets (allow overrides the blocks above)
+9,Allow,-,-,10.0.0.0/24,10.0.1.0/24,1,-,-,Allow HQ to ping US
+10,Allow,-,-,10.0.0.0/24,10.0.40.0/24,1,-,-,Allow HQ to ping UK
+11,Allow,-,-,10.0.0.0/24,10.0.20.0/24,1,-,-,Allow HQ to ping India
+#
+# Task 4: block cn3 web server responses by filtering source port 80/443
+12,Block,-,-,10.0.30.3/32,-,6,80,-,Block cn3 HTTP responses (src port 80)
+13,Block,-,-,10.0.30.3/32,-,6,443,-,Block cn3 HTTPS responses (src port 443)
+#
+# Task 5: block specific hosts from accessing us3/us4 microservice on TCP 9520
+# using CIDR to group hosts efficiently
+# us3=10.0.1.33, us4=10.0.1.34 -> 10.0.1.32/30 covers both
+# uk2-uk5: .128-.131 -> 10.0.40.128/30
+# in4-in5: .125-.126 -> 10.0.20.124/30
+# us5: .125 -> 10.0.1.124/30
+# hq5: .220 -> 10.0.0.220/30
+14,Block,-,-,10.0.40.128/30,10.0.1.32/30,6,-,9520,Block uk2-uk5 from us3/us4 TCP 9520
+15,Block,-,-,10.0.20.124/30,10.0.1.32/30,6,-,9520,Block in4-in5 from us3/us4 TCP 9520
+16,Block,-,-,10.0.1.124/30,10.0.1.32/30,6,-,9520,Block us5 from us3/us4 TCP 9520
+17,Block,-,-,10.0.0.220/30,10.0.1.32/30,6,-,9520,Block hq5 from us3/us4 TCP 9520
+#
+# Task 6: rogue raspberry pi cloned us1's MAC - block that MAC on UDP
+18,Block,00:00:00:01:00:1e,-,-,-,17,-,-,Block us1 MAC on UDP (rogue Pi)
+#
+# Task 7: block external SMTP access (TCP port 25) to all corporate subnets
+19,Block,-,-,-,10.0.0.0/24,6,-,25,Block TCP 25 to HQ
+20,Block,-,-,-,10.0.1.0/24,6,-,25,Block TCP 25 to US
+21,Block,-,-,-,10.0.20.0/24,6,-,25,Block TCP 25 to India
+22,Block,-,-,-,10.0.30.0/24,6,-,25,Block TCP 25 to China
+23,Block,-,-,-,10.0.40.0/24,6,-,25,Block TCP 25 to UK
