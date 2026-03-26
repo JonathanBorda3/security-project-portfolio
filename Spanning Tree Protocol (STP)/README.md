@@ -122,6 +122,4 @@ python run.py ComplexLoopTopo # Run on complex topology
 
 Output shows active links for each switch in the spanning tree.
 
----
 
-*Note: This was a course project for Computer Networks. The core algorithm implementation (Switch.py) is my work and can be shared since the course has concluded. The framework files (Topology.py, Message.py, StpSwitch.py, run.py) were provided as part of the assignment infrastructure.*
